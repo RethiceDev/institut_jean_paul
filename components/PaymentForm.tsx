@@ -14,12 +14,15 @@ interface Values {
   phone: string;
   motif: string;
   amount: string;
-  network: NetworkId | "";
+  network: NetworkId;
 }
 
 type PayResponse =
   | { ok: true; kind: "mobile" | "redirect"; reference: string; token: string; url?: string }
   | { ok: false; error?: string; errors?: Record<string, string> };
+
+const MTN_NETWORK =
+  NETWORKS.find((n) => n.id.toLowerCase().includes("mtn")) ?? NETWORKS[0];
 
 const INITIAL: Values = {
   nom: "",
@@ -30,7 +33,7 @@ const INITIAL: Values = {
   phone: "",
   motif: "",
   amount: "",
-  network: "",
+  network: MTN_NETWORK.id,
 };
 
 const inputClass =
@@ -128,8 +131,8 @@ export default function PaymentForm({ minAmount }: { minAmount: number }) {
   const amountNumber = Number(values.amount);
   const label =
     Number.isInteger(amountNumber) && amountNumber > 0
-      ? `Payer ${new Intl.NumberFormat("fr-FR").format(amountNumber).replace(/[\u202f\u00a0]/g, " ")} FCFA`
-      : "Payer";
+      ? `Payer ${new Intl.NumberFormat("fr-FR").format(amountNumber).replace(/[\u202f\u00a0]/g, " ")} FCFA avec ${MTN_NETWORK.label}`
+      : `Payer avec ${MTN_NETWORK.label}`;
 
   return (
     <form onSubmit={onSubmit} noValidate className="space-y-3 rounded-xl border border-stone-200 bg-white p-4 shadow-sm">
@@ -217,7 +220,7 @@ export default function PaymentForm({ minAmount }: { minAmount: number }) {
             className={inputClass}
           />
         </Field>
-        <Field id="phone" label="Numéro de téléphone" error={errors.phone} hint="Le numéro du compte qui paie.">
+        <Field id="phone" label="Numéro MTN MoMo" error={errors.phone} hint="Le numéro MTN du compte qui paie.">
           <input
             id="phone"
             name="phone"
@@ -275,36 +278,12 @@ export default function PaymentForm({ minAmount }: { minAmount: number }) {
         </Field>
       </div>
 
-      <fieldset>
-        <legend className="mb-1 text-xs font-semibold text-slate-700">Moyen de paiement</legend>
-        <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-          {NETWORKS.map((option) => (
-            <div key={option.id}>
-              <input
-                id={`network-${option.id}`}
-                type="radio"
-                name="network"
-                value={option.id}
-                checked={values.network === option.id}
-                onChange={onChange}
-                className="peer sr-only"
-              />
-              <label
-                htmlFor={`network-${option.id}`}
-                className="flex h-full cursor-pointer flex-col rounded-lg border border-stone-300 bg-white px-2 py-2 text-center text-xs leading-tight transition peer-checked:border-navy peer-checked:bg-blue-50 peer-checked:ring-2 peer-checked:ring-navy peer-focus-visible:ring-2 peer-focus-visible:ring-gold"
-              >
-                <span className="font-semibold text-slate-900">{option.label}</span>
-                <span className="text-[11px] text-slate-500">{option.hint}</span>
-              </label>
-            </div>
-          ))}
-        </div>
-        {errors.network ? (
-          <p role="alert" className="mt-1 text-xs text-red-700">
-            {errors.network}
-          </p>
-        ) : null}
-      </fieldset>
+      <div className="flex items-center justify-between rounded-lg border border-amber-300 bg-amber-50/70 px-3 py-2 text-xs">
+        <span className="font-semibold text-slate-800">Moyen de paiement</span>
+        <span className="font-semibold text-amber-900">
+          {MTN_NETWORK.label} {MTN_NETWORK.hint ? `(${MTN_NETWORK.hint})` : ""}
+        </span>
+      </div>
 
       <button
         type="submit"

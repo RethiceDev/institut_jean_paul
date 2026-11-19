@@ -8,6 +8,8 @@ import { validatePayInput } from "@/lib/validation";
 interface Values {
   nom: string;
   prenoms: string;
+  filiere: string;
+  annee: string;
   email: string;
   phone: string;
   motif: string;
@@ -19,7 +21,17 @@ type PayResponse =
   | { ok: true; kind: "mobile" | "redirect"; reference: string; token: string; url?: string }
   | { ok: false; error?: string; errors?: Record<string, string> };
 
-const INITIAL: Values = { nom: "", prenoms: "", email: "", phone: "", motif: "", amount: "", network: "" };
+const INITIAL: Values = {
+  nom: "",
+  prenoms: "",
+  filiere: "",
+  annee: "",
+  email: "",
+  phone: "",
+  motif: "",
+  amount: "",
+  network: "",
+};
 
 const inputClass =
   "w-full rounded-lg border border-stone-300 bg-white px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:border-navy focus:outline-none focus:ring-2 focus:ring-gold";
@@ -72,7 +84,7 @@ export default function PaymentForm({ minAmount }: { minAmount: number }) {
     if (submitting) return;
     setFormError("");
 
-    const check = validatePayInput(values, minAmount);
+    const check = validatePayInput(values as Parameters<typeof validatePayInput>[0], minAmount);
     if (!check.ok) {
       setErrors(check.errors);
       return;
@@ -129,32 +141,114 @@ export default function PaymentForm({ minAmount }: { minAmount: number }) {
 
       <div className="grid gap-3 sm:grid-cols-2">
         <Field id="nom" label="Nom" error={errors.nom}>
-          <input id="nom" name="nom" value={values.nom} onChange={onChange} autoComplete="family-name" required
-            aria-invalid={Boolean(errors.nom)} aria-describedby={describedBy("nom")} className={inputClass} />
+          <input
+            id="nom"
+            name="nom"
+            value={values.nom}
+            onChange={onChange}
+            autoComplete="family-name"
+            required
+            aria-invalid={Boolean(errors.nom)}
+            aria-describedby={describedBy("nom")}
+            className={inputClass}
+          />
         </Field>
         <Field id="prenoms" label="Prénoms" error={errors.prenoms}>
-          <input id="prenoms" name="prenoms" value={values.prenoms} onChange={onChange} autoComplete="given-name" required
-            aria-invalid={Boolean(errors.prenoms)} aria-describedby={describedBy("prenoms")} className={inputClass} />
+          <input
+            id="prenoms"
+            name="prenoms"
+            value={values.prenoms}
+            onChange={onChange}
+            autoComplete="given-name"
+            required
+            aria-invalid={Boolean(errors.prenoms)}
+            aria-describedby={describedBy("prenoms")}
+            className={inputClass}
+          />
         </Field>
       </div>
 
       <div className="grid gap-3 sm:grid-cols-2">
-        <Field id="email" label="Adresse e-mail" error={errors.email} hint="Le reçu officiel sera envoyé automatiquement à cette adresse.">
-          <input id="email" name="email" type="email" value={values.email} onChange={onChange} autoComplete="email" required
-            aria-invalid={Boolean(errors.email)} aria-describedby={describedBy("email", true)} className={inputClass} />
+        <Field id="filiere" label="Filière" error={errors.filiere}>
+          <input
+            id="filiere"
+            name="filiere"
+            value={values.filiere}
+            onChange={onChange}
+            placeholder="Ex. Philosophie, Sciences humaines…"
+            required
+            aria-invalid={Boolean(errors.filiere)}
+            aria-describedby={describedBy("filiere")}
+            className={inputClass}
+          />
+        </Field>
+        <Field id="annee" label="Année" error={errors.annee}>
+          <input
+            id="annee"
+            name="annee"
+            value={values.annee}
+            onChange={onChange}
+            placeholder="Ex. 1re année, 2e année, 3e année…"
+            required
+            aria-invalid={Boolean(errors.annee)}
+            aria-describedby={describedBy("annee")}
+            className={inputClass}
+          />
+        </Field>
+      </div>
+
+      <div className="grid gap-3 sm:grid-cols-2">
+        <Field
+          id="email"
+          label="Adresse e-mail"
+          error={errors.email}
+          hint="Le reçu officiel sera envoyé automatiquement à cette adresse."
+        >
+          <input
+            id="email"
+            name="email"
+            type="email"
+            value={values.email}
+            onChange={onChange}
+            autoComplete="email"
+            required
+            aria-invalid={Boolean(errors.email)}
+            aria-describedby={describedBy("email", true)}
+            className={inputClass}
+          />
         </Field>
         <Field id="phone" label="Numéro de téléphone" error={errors.phone} hint="Le numéro du compte qui paie.">
-          <input id="phone" name="phone" type="tel" inputMode="tel" value={values.phone} onChange={onChange} autoComplete="tel"
-            placeholder="01 66 00 00 00" required aria-invalid={Boolean(errors.phone)}
-            aria-describedby={describedBy("phone", true)} className={inputClass} />
+          <input
+            id="phone"
+            name="phone"
+            type="tel"
+            inputMode="tel"
+            value={values.phone}
+            onChange={onChange}
+            autoComplete="tel"
+            placeholder="01 66 00 00 00"
+            required
+            aria-invalid={Boolean(errors.phone)}
+            aria-describedby={describedBy("phone", true)}
+            className={inputClass}
+          />
         </Field>
       </div>
 
       <div className="grid gap-3 sm:grid-cols-[1fr_10rem]">
         <Field id="motif" label="Motif du paiement" error={errors.motif}>
-          <input id="motif" name="motif" value={values.motif} onChange={onChange} list="motifs" required
-            placeholder="Frais de scolarité, droits d'inscription…" aria-invalid={Boolean(errors.motif)}
-            aria-describedby={describedBy("motif")} className={inputClass} />
+          <input
+            id="motif"
+            name="motif"
+            value={values.motif}
+            onChange={onChange}
+            list="motifs"
+            required
+            placeholder="Frais de scolarité, droits d'inscription…"
+            aria-invalid={Boolean(errors.motif)}
+            aria-describedby={describedBy("motif")}
+            className={inputClass}
+          />
           <datalist id="motifs">
             <option value="Frais de scolarité" />
             <option value="Droits d'inscription" />
@@ -163,9 +257,21 @@ export default function PaymentForm({ minAmount }: { minAmount: number }) {
           </datalist>
         </Field>
         <Field id="amount" label="Montant (FCFA)" error={errors.amount}>
-          <input id="amount" name="amount" type="number" inputMode="numeric" min={minAmount} step={1} value={values.amount}
-            onChange={onChange} required placeholder={`min. ${minAmount}`} aria-invalid={Boolean(errors.amount)}
-            aria-describedby={describedBy("amount")} className={inputClass} />
+          <input
+            id="amount"
+            name="amount"
+            type="number"
+            inputMode="numeric"
+            min={minAmount}
+            step={1}
+            value={values.amount}
+            onChange={onChange}
+            required
+            placeholder={`min. ${minAmount}`}
+            aria-invalid={Boolean(errors.amount)}
+            aria-describedby={describedBy("amount")}
+            className={inputClass}
+          />
         </Field>
       </div>
 

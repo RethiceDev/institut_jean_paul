@@ -1,8 +1,13 @@
 import { findNetwork, type NetworkId } from "./networks";
 
+export const ANNEES = ["Premier", "Deuxième", "Troisième"] as const;
+export type Annee = (typeof ANNEES)[number];
+
 export interface PayInput {
   nom: string;
   prenoms: string;
+  filiere: string;
+  annee: Annee;
   email: string;
   phone: string;
   motif: string;
@@ -22,6 +27,11 @@ function clean(value: unknown, max: number): string {
   return typeof value === "string" ? value.replace(/\s+/g, " ").trim().slice(0, max + 1) : "";
 }
 
+function parseAnnee(value: unknown): Annee | undefined {
+  if (typeof value !== "string") return undefined;
+  return (ANNEES as readonly string[]).includes(value) ? (value as Annee) : undefined;
+}
+
 /** "01 66 00 00 00", "+229 01 66 00 00 00" ou "0166000000" => "2290166000000". */
 export function normalizePhone(value: unknown): string {
   let digits = typeof value === "string" ? value.replace(/\D/g, "") : "";
@@ -36,6 +46,8 @@ export function validatePayInput(raw: unknown, minAmount: number): ValidationRes
 
   const nom = clean(src.nom, 100);
   const prenoms = clean(src.prenoms, 150);
+  const filiere = clean(src.filiere, 150);
+  const annee = parseAnnee(src.annee);
   const email = clean(src.email, 150).toLowerCase();
   const motif = clean(src.motif, 200);
   const phone = normalizePhone(src.phone);
@@ -48,6 +60,11 @@ export function validatePayInput(raw: unknown, minAmount: number): ValidationRes
 
   if (prenoms === "") errors.prenoms = "Les prénoms sont obligatoires.";
   else if (prenoms.length > 150) errors.prenoms = "Les prénoms sont trop longs.";
+
+  if (filiere === "") errors.filiere = "La filière est obligatoire.";
+  else if (filiere.length > 150) errors.filiere = "La filière est trop longue.";
+
+  if (!annee) errors.annee = "Sélectionnez l'année (Premier, Deuxième ou Troisième).";
 
   if (email === "") errors.email = "L'adresse e-mail est obligatoire.";
   else if (!EMAIL_RE.test(email)) errors.email = "Adresse e-mail invalide.";
@@ -64,9 +81,12 @@ export function validatePayInput(raw: unknown, minAmount: number): ValidationRes
 
   if (!network) errors.network = "Choisissez un moyen de paiement.";
 
-  if (Object.keys(errors).length > 0 || !network) {
+  if (Object.keys(errors).length > 0 || !annee || !network) {
     return { ok: false, errors };
   }
 
-  return { ok: true, data: { nom, prenoms, email, phone, motif, amount: amountRaw, network: network.id } };
+  return {
+    ok: true,
+    data: { nom, prenoms, filiere, annee, email, phone, motif, amount: amountRaw, network: network.id },
+  };
 }

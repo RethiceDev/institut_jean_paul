@@ -1,13 +1,10 @@
 import { findNetwork, type NetworkId } from "./networks";
 
-export const ANNEES = ["Premier", "Deuxième", "Troisième"] as const;
-export type Annee = (typeof ANNEES)[number];
-
 export interface PayInput {
   nom: string;
   prenoms: string;
   filiere: string;
-  annee: Annee;
+  annee: string;
   email: string;
   phone: string;
   motif: string;
@@ -27,11 +24,6 @@ function clean(value: unknown, max: number): string {
   return typeof value === "string" ? value.replace(/\s+/g, " ").trim().slice(0, max + 1) : "";
 }
 
-function parseAnnee(value: unknown): Annee | undefined {
-  if (typeof value !== "string") return undefined;
-  return (ANNEES as readonly string[]).includes(value) ? (value as Annee) : undefined;
-}
-
 /** "01 66 00 00 00", "+229 01 66 00 00 00" ou "0166000000" => "2290166000000". */
 export function normalizePhone(value: unknown): string {
   let digits = typeof value === "string" ? value.replace(/\D/g, "") : "";
@@ -47,7 +39,7 @@ export function validatePayInput(raw: unknown, minAmount: number): ValidationRes
   const nom = clean(src.nom, 100);
   const prenoms = clean(src.prenoms, 150);
   const filiere = clean(src.filiere, 150);
-  const annee = parseAnnee(src.annee);
+  const annee = clean(src.annee, 80);
   const email = clean(src.email, 150).toLowerCase();
   const motif = clean(src.motif, 200);
   const phone = normalizePhone(src.phone);
@@ -64,7 +56,8 @@ export function validatePayInput(raw: unknown, minAmount: number): ValidationRes
   if (filiere === "") errors.filiere = "La filière est obligatoire.";
   else if (filiere.length > 150) errors.filiere = "La filière est trop longue.";
 
-  if (!annee) errors.annee = "Sélectionnez l'année (Premier, Deuxième ou Troisième).";
+  if (annee === "") errors.annee = "L'année est obligatoire.";
+  else if (annee.length > 80) errors.annee = "L'année est trop longue.";
 
   if (email === "") errors.email = "L'adresse e-mail est obligatoire.";
   else if (!EMAIL_RE.test(email)) errors.email = "Adresse e-mail invalide.";
@@ -81,7 +74,7 @@ export function validatePayInput(raw: unknown, minAmount: number): ValidationRes
 
   if (!network) errors.network = "Choisissez un moyen de paiement.";
 
-  if (Object.keys(errors).length > 0 || !annee || !network) {
+  if (Object.keys(errors).length > 0 || !network) {
     return { ok: false, errors };
   }
 
